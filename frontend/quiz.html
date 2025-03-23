@@ -349,7 +349,9 @@
     </div>
 
     <script>
-      fetch("http://localhost:3000/api/check-auth", { credentials: "include" })
+      fetch("https://quiz-game.onrender.com/api/check-auth", {
+        credentials: "include",
+      })
         .then((response) => {
           if (!response.ok) {
             return response.json().then((err) => {
