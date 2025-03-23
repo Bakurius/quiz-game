@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const bcrypt = require("bcryptjs"); // Changed to bcryptjs
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
@@ -36,6 +36,11 @@ app.use(express.json());
 app.use(cookieParser());
 
 // MongoDB connection
+if (!process.env.MONGO_URI) {
+  console.error("Error: MONGO_URI is not defined in environment variables.");
+  process.exit(1); // Exit the process with failure
+}
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB Atlas"))
