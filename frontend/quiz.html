@@ -78,8 +78,8 @@
         border-radius: 12px;
         font-size: clamp(0.9em, 3vw, 1em);
         cursor: pointer;
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out,
-          background 0.2s ease-in-out, filter 0.2s ease-in-out;
+        transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out,
+          background 0.15s ease-in-out, filter 0.15s ease-in-out;
         position: relative;
         overflow: hidden;
         min-height: 44px;
@@ -89,12 +89,13 @@
         outline: none;
       }
       button:hover {
-        transform: translateY(-1px); /* Lift effect */
-        filter: brightness(1.1); /* Subtle glow */
+        transform: translateY(-1px);
+        filter: brightness(1.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       }
       button:active {
         transform: scale(0.97);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); /* Pressed state */
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
       }
       .start-btn {
         background: linear-gradient(135deg, #4caf50, #2e7d32);
@@ -102,11 +103,7 @@
         font-weight: bold;
       }
       .start-btn:hover {
-        background: linear-gradient(
-          135deg,
-          #55b559,
-          #357a38
-        ); /* Brighter shift */
+        background: linear-gradient(135deg, #55b559, #357a38);
       }
       .option-btn {
         background: linear-gradient(135deg, #3a3c4d, #2e303f);
@@ -144,11 +141,7 @@
         color: #fff;
       }
       .rankings-btn:hover {
-        background: linear-gradient(
-          135deg,
-          #f7a825,
-          #e67e22
-        ); /* Brighter shift */
+        background: linear-gradient(135deg, #f7a825, #e67e22);
       }
       .nav-btn {
         background: linear-gradient(135deg, #3a3c4d, #2e303f);
@@ -282,7 +275,7 @@
         }
         .option-btn:hover,
         button:hover {
-          transform: none; /* No hover effect on mobile */
+          transform: none;
           box-shadow: none;
           filter: none;
         }
@@ -349,9 +342,7 @@
     </div>
 
     <script>
-      fetch("https://quiz-game.onrender.com/api/check-auth", {
-        credentials: "include",
-      })
+      fetch("/api/check-auth", { credentials: "include" })
         .then((response) => {
           if (!response.ok) {
             return response.json().then((err) => {
@@ -378,10 +369,9 @@
 
       async function fetchQuestions(category) {
         try {
-          const response = await fetch(
-            `http://localhost:3000/api/questions/${category}`,
-            { credentials: "include" }
-          );
+          const response = await fetch(`/api/questions/${category}`, {
+            credentials: "include",
+          });
           if (!response.ok) throw new Error("Failed to fetch questions");
           const data = await response.json();
           questions = data.map((q) => ({
@@ -424,12 +414,12 @@
         } else {
           saveScore().then(() => {
             document.getElementById("quiz").innerHTML = `
-                      <h2>Quiz Finished!</h2>
-                      <p>Your final score is ${score}/${questions.length}</p>
-                      <div class="button-group">
-                        <button class="start-btn" onclick="window.location.reload()">Play Again</button>
-                      </div>
-                  `;
+              <h2>Quiz Finished!</h2>
+              <p>Your final score is ${score}/${questions.length}</p>
+              <div class="button-group">
+                <button class="start-btn" onclick="window.location.reload()">Play Again</button>
+              </div>
+            `;
           });
         }
       }
@@ -460,7 +450,7 @@
 
       async function saveScore() {
         const date = new Date().toLocaleString();
-        const response = await fetch("http://localhost:3000/api/score", {
+        const response = await fetch("/api/score", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ score, date }),
@@ -471,7 +461,7 @@
       }
 
       function logout() {
-        fetch("http://localhost:3000/api/logout", {
+        fetch("/api/logout", {
           method: "POST",
           credentials: "include",
         }).then(() => {
@@ -490,7 +480,7 @@
       rankingsBtn.onclick = async () => {
         modal.style.display = "block";
         setTimeout(() => modal.classList.add("active"), 10);
-        const response = await fetch("http://localhost:3000/api/rankings", {
+        const response = await fetch("/api/rankings", {
           credentials: "include",
         });
         const rankings = await response.json();

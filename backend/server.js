@@ -5,7 +5,8 @@ const dotenv = require("dotenv");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-const rateLimit = require("express-rate-limit"); // Add this
+const rateLimit = require("express-rate-limit");
+const path = require("path"); // Added for static file serving
 const User = require("./models/User");
 const Score = require("./models/Score");
 const Question = require("./models/Question");
@@ -21,32 +22,27 @@ const signupLimiter = rateLimit({
     "Too many signup attempts from this IP, please try again after 15 minutes",
 });
 
+// Serve static files from frontend/
+app.use(express.static(path.join(__dirname, "../frontend")));
+
+// CORS setup for Render (allow all origins for simplicity, since Render's domain isn't localhost)
 app.use(
   cors({
     credentials: true,
-    origin: (origin, callback) => {
-      const allowedOrigins = [
-        "http://localhost:8080",
-        "http://localhost:8081",
-        "http://127.0.0.1:8080",
-      ];
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: true, // Allow all origins (Render will use a different domain)
   })
 );
 app.use(express.json());
 app.use(cookieParser());
 
+// MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("Connected to MongoDB Atlas"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-const JWT_SECRET = "my-super-secret-key-123"; // Hardcoded for now
+// Use environment variable for JWT_SECRET
+const JWT_SECRET = process.env.JWT_SECRET || "my-super-secret-key-123"; // Fallback for local dev
 
 const authenticateToken = (req, res, next) => {
   const token = req.cookies.token;
@@ -64,7 +60,7 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
-// Seed Questions (unchanged, skipping for brevity)
+// Seed Questions (unchanged)
 async function seedQuestions() {
   try {
     await Question.deleteMany({});
@@ -346,7 +342,7 @@ async function seedQuestions() {
           "Who holds the record for the most goals in a single World Cup?",
         options: ["Pele", "Marta", "Miroslav Klose", "Ronaldo"],
         answer: "Miroslav Klose",
-      }, // Corrected: Miroslav Klose, not Marta
+      },
       {
         category: "Sports",
         question: "What is the fastest sport on grass?",
@@ -388,7 +384,7 @@ async function seedQuestions() {
           "Mississippi River",
         ],
         answer: "Nile River",
-      }, // Corrected: Nile is considered longest by most metrics
+      },
       {
         category: "Geography",
         question: "What is the capital of France?",
@@ -472,7 +468,6 @@ async function seedQuestions() {
         ],
         answer: "HyperText Transfer Protocol",
       },
-
       {
         category: "Technology",
         question: "What does 'CSS' stand for?",
@@ -847,7 +842,7 @@ app.post("/api/login", async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false, // False for local dev
+      secure: process.env.NODE_ENV === "production", // Secure in production
       sameSite: "lax", // Allow cross-origin
       maxAge: 3600000,
     });
@@ -983,6 +978,7 @@ app.get("/api/check-auth", authenticateToken, (req, res) => {
   });
 });
 
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

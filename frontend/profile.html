@@ -163,7 +163,7 @@
     </div>
 
     <script>
-      fetch("http://localhost:3000/api/check-auth", { credentials: "include" })
+      fetch("/api/check-auth", { credentials: "include" })
         .then((response) => {
           if (!response.ok) {
             return response.json().then((err) => {
@@ -189,12 +189,9 @@
 
       async function loadScoreHistory(userId) {
         try {
-          const response = await fetch(
-            `http://localhost:3000/api/scores/${userId}`,
-            {
-              credentials: "include",
-            }
-          );
+          const response = await fetch(`/api/scores/${userId}`, {
+            credentials: "include",
+          });
           if (!response.ok) throw new Error("Failed to fetch scores");
           const { scores, totalScore } = await response.json();
           const historyList = document.getElementById("score-history");
@@ -220,7 +217,7 @@
       }
 
       function logout() {
-        fetch("http://localhost:3000/api/logout", {
+        fetch("/api/logout", {
           method: "POST",
           credentials: "include",
         }).then(() => {

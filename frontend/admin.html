@@ -248,7 +248,7 @@
     </div>
 
     <script>
-      fetch("http://localhost:3000/api/check-auth", { credentials: "include" })
+      fetch("/api/check-auth", { credentials: "include" })
         .then((response) => {
           if (!response.ok) {
             return response.json().then((err) => {
@@ -286,15 +286,12 @@
         const options = [option1, option2, option3, option4];
 
         try {
-          const response = await fetch(
-            "http://localhost:3000/api/questions/add",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ category, question, options, answer }),
-              credentials: "include",
-            }
-          );
+          const response = await fetch("/api/questions/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ category, question, options, answer }),
+            credentials: "include",
+          });
           const result = await response.json();
           if (response.ok) {
             message.textContent = result.message;
