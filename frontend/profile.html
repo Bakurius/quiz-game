@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3d 100%);
+        color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        overflow-x: hidden;
+      }
+      .container {
+        background: #292b3a;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 450px;
+        min-height: 400px;
+        transition: transform 0.3s ease;
+        display: none;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeIn 0.5s ease forwards;
+      }
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .container:hover {
+        transform: translateY(-5px);
+      }
+      h1 {
+        font-size: clamp(1.8em, 5vw, 2em);
+        margin-bottom: 20px;
+        color: #4caf50;
+        text-align: center;
+      }
+      h3 {
+        font-size: clamp(1.3em, 4vw, 1.5em);
+        margin: 20px 0 10px;
+        color: #fff;
+        text-align: center;
+      }
+      p {
+        font-size: clamp(0.9em, 3vw, 1.1em);
+        margin: 10px 0;
+        text-align: center;
+      }
+      /* Button Styles */
+      .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+        margin-top: 20px;
+      }
+      button {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 10px;
+        font-size: clamp(0.9em, 3vw, 1em);
+        cursor: pointer;
+        transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out,
+          background 0.25s ease-in-out;
+        position: relative;
+        overflow: hidden;
+        min-height: 48px;
+      }
+      button::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.25s ease-in-out, height 0.25s ease-in-out;
+      }
+      button:hover::after {
+        width: 200%;
+        height: 200%;
+      }
+      button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+      button:active {
+        transform: scale(0.98);
+      }
+      .quiz-btn {
+        background: linear-gradient(135deg, #4caf50, #388e3c);
+        color: #fff;
+        font-weight: bold;
+      }
+      .quiz-btn:hover {
+        background: linear-gradient(135deg, #45a049, #357a38);
+      }
+      .log-out {
+        background: linear-gradient(135deg, #3a3c4d, #2e303f);
+        color: #fff;
+      }
+      .log-out:hover {
+        background: linear-gradient(135deg, #44465a, #383a4d);
+      }
+      /* Score History */
+      #score-history {
+        list-style: none;
+        padding: 0;
+        text-align: left;
+      }
+      #score-history li {
+        padding: 10px;
+        background: linear-gradient(135deg, #3a3c4d, #2e303f);
+        margin: 5px 0;
+        border-radius: 8px;
+        font-size: clamp(0.85em, 2.5vw, 1em);
+        transition: background 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+      }
+      #score-history li:hover {
+        background: linear-gradient(135deg, #44465a, #383a4d);
+        box-shadow: 0 2px 10px rgba(76, 175, 80, 0.2);
+      }
+      /* Responsive */
+      @media (max-width: 600px) {
+        .container {
+          padding: 20px;
+          max-width: 90%;
+        }
+        .button-group {
+          gap: 8px;
+        }
+        button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="profile-container">
+      <h1>Profile</h1>
+      <p id="username-display"></p>
+      <p id="total-score"></p>
+      <h3>Score History</h3>
+      <ul id="score-history"></ul>
+      <div class="button-group">
+        <button class="quiz-btn" onclick="window.location.href='quiz.html'">
+          Back to Quiz
+        </button>
+        <button class="log-out" onclick="logout()">Logout</button>
+      </div>
+    </div>
+
+    <script>
+      fetch("http://localhost:3000/api/check-auth", { credentials: "include" })
+        .then((response) => {
+          if (!response.ok) {
+            return response.json().then((err) => {
+              throw new Error(err.message);
+            });
+          }
+          return response.json();
+        })
+        .then((data) => {
+          localStorage.setItem("userId", data.userId);
+          localStorage.setItem("username", data.username);
+          localStorage.setItem("isAdmin", data.isAdmin);
+          document.getElementById(
+            "username-display"
+          ).textContent = `Logged in as: ${data.username}`;
+          document.getElementById("profile-container").style.display = "block";
+          loadScoreHistory(data.userId);
+        })
+        .catch((error) => {
+          alert("Please login first!");
+          window.location.href = "login.html";
+        });
+
+      async function loadScoreHistory(userId) {
+        try {
+          const response = await fetch(
+            `http://localhost:3000/api/scores/${userId}`,
+            {
+              credentials: "include",
+            }
+          );
+          if (!response.ok) throw new Error("Failed to fetch scores");
+          const { scores, totalScore } = await response.json();
+          const historyList = document.getElementById("score-history");
+          document.getElementById(
+            "total-score"
+          ).textContent = `Total Score: ${totalScore}`;
+          if (scores.length === 0) {
+            historyList.innerHTML = "<li>No quiz history yet.</li>";
+          } else {
+            scores.forEach((entry, index) => {
+              const li = document.createElement("li");
+              li.textContent = `Quiz ${index + 1}: ${entry.score}/10 - ${
+                entry.date
+              }`;
+              historyList.appendChild(li);
+            });
+          }
+        } catch (error) {
+          console.error("Error loading scores:", error);
+          document.getElementById("score-history").innerHTML =
+            "<li>Error loading score history.</li>";
+        }
+      }
+
+      function logout() {
+        fetch("http://localhost:3000/api/logout", {
+          method: "POST",
+          credentials: "include",
+        }).then(() => {
+          localStorage.removeItem("userId");
+          localStorage.removeItem("username");
+          localStorage.removeItem("isAdmin");
+          alert("Logged out successfully!");
+          window.location.href = "login.html";
+        });
+      }
+    </script>
+  </body>
+</html>

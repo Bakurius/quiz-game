@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin - Add Questions</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: linear-gradient(135deg, #1e1e2f 0%, #2a2a3d 100%);
+        color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        overflow-x: hidden;
+      }
+      .container {
+        background: #292b3a;
+        padding: 50px 30px;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 450px;
+        min-height: 600px;
+        transition: transform 0.3s ease;
+        display: none;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeIn 0.5s ease forwards;
+      }
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .container:hover {
+        transform: translateY(-5px);
+      }
+      h1 {
+        font-size: clamp(1.8em, 5vw, 2em);
+        margin-bottom: 20px;
+        color: #4caf50;
+        text-align: center;
+      }
+      label {
+        margin: 10px 0 5px;
+        text-align: left;
+        font-size: clamp(0.9em, 3vw, 1em);
+      }
+      .input-group {
+        margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      select,
+      input[type="text"] {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: #3a3c4d;
+        color: #fff;
+        font-size: clamp(0.85em, 2.5vw, 1em);
+        box-sizing: border-box;
+        transition: box-shadow 0.25s ease-in-out;
+      }
+      select:focus,
+      input[type="text"]:focus {
+        outline: none;
+        box-shadow: 0 0 5px #4caf50;
+        border: 1px solid #4caf50; /* Green border on focus */
+      }
+      /* Button Styles */
+      .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+        margin-top: 20px;
+      }
+      button {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 10px;
+        font-size: clamp(0.9em, 3vw, 1em);
+        cursor: pointer;
+        transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out,
+          background 0.25s ease-in-out;
+        position: relative;
+        overflow: hidden;
+        min-height: 48px;
+      }
+      button::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.25s ease-in-out, height 0.25s ease-in-out;
+      }
+      button:hover::after {
+        width: 200%;
+        height: 200%;
+      }
+      button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+      button:active {
+        transform: scale(0.98);
+      }
+      .submit-btn {
+        background: linear-gradient(135deg, #4caf50, #388e3c);
+        color: #fff;
+        font-weight: bold;
+      }
+      .submit-btn:hover {
+        background: linear-gradient(135deg, #45a049, #357a38);
+      }
+      .quiz-btn {
+        background: linear-gradient(135deg, #3a3c4d, #2e303f);
+        color: #fff;
+      }
+      .quiz-btn:hover {
+        background: linear-gradient(135deg, #44465a, #383a4d);
+      }
+      #message {
+        margin-top: 15px;
+        font-size: clamp(0.9em, 3vw, 1.1em);
+        text-align: center;
+      }
+      .error {
+        color: #e74c3c;
+      }
+      .success {
+        color: #4caf50;
+      }
+      /* Responsive */
+      @media (max-width: 600px) {
+        .container {
+          padding: 40px 20px;
+          max-width: 90%;
+        }
+        .button-group {
+          gap: 8px;
+        }
+        button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="admin-container">
+      <h1>Add New Question</h1>
+      <form id="question-form">
+        <div class="input-group">
+          <label for="category">Category:</label>
+          <select id="category" name="category">
+            <option value="Math">Math</option>
+            <option value="Science">Science</option>
+            <option value="History">History</option>
+            <option value="Sports">Sports</option>
+            <option value="Geography">Geography</option>
+            <option value="Technology">Technology</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="question">Question:</label>
+          <input
+            type="text"
+            id="question"
+            name="question"
+            placeholder="Enter the question"
+            required
+          />
+        </div>
+        <div class="input-group">
+          <label for="option1">Option 1:</label>
+          <input
+            type="text"
+            id="option1"
+            name="option1"
+            placeholder="Option 1"
+            required
+          />
+        </div>
+        <div class="input-group">
+          <label for="option2">Option 2:</label>
+          <input
+            type="text"
+            id="option2"
+            name="option2"
+            placeholder="Option 2"
+            required
+          />
+        </div>
+        <div class="input-group">
+          <label for="option3">Option 3:</label>
+          <input
+            type="text"
+            id="option3"
+            name="option3"
+            placeholder="Option 3"
+            required
+          />
+        </div>
+        <div class="input-group">
+          <label for="option4">Option 4:</label>
+          <input
+            type="text"
+            id="option4"
+            name="option4"
+            placeholder="Option 4"
+            required
+          />
+        </div>
+        <div class="input-group">
+          <label for="answer">Correct Answer:</label>
+          <input
+            type="text"
+            id="answer"
+            name="answer"
+            placeholder="Correct answer"
+            required
+          />
+        </div>
+        <div class="button-group">
+          <button type="submit" class="submit-btn">Add Question</button>
+          <button
+            type="button"
+            class="quiz-btn"
+            onclick="window.location.href='quiz.html'"
+          >
+            Back to Quiz
+          </button>
+        </div>
+      </form>
+      <p id="message"></p>
+    </div>
+
+    <script>
+      fetch("http://localhost:3000/api/check-auth", { credentials: "include" })
+        .then((response) => {
+          if (!response.ok) {
+            return response.json().then((err) => {
+              throw new Error(err.message);
+            });
+          }
+          return response.json();
+        })
+        .then((data) => {
+          if (!data.isAdmin) {
+            alert("Unauthorized: Admin access required");
+            window.location.href = "quiz.html";
+            return;
+          }
+          document.getElementById("admin-container").style.display = "block";
+          localStorage.setItem("isAdmin", data.isAdmin);
+        })
+        .catch(() => {
+          alert("Please login first!");
+          window.location.href = "login.html";
+        });
+
+      const form = document.getElementById("question-form");
+      const message = document.getElementById("message");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const category = document.getElementById("category").value;
+        const question = document.getElementById("question").value;
+        const option1 = document.getElementById("option1").value;
+        const option2 = document.getElementById("option2").value;
+        const option3 = document.getElementById("option3").value;
+        const option4 = document.getElementById("option4").value;
+        const answer = document.getElementById("answer").value;
+        const options = [option1, option2, option3, option4];
+
+        try {
+          const response = await fetch(
+            "http://localhost:3000/api/questions/add",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ category, question, options, answer }),
+              credentials: "include",
+            }
+          );
+          const result = await response.json();
+          if (response.ok) {
+            message.textContent = result.message;
+            message.className = "success";
+            form.reset();
+          } else {
+            message.textContent = result.message;
+            message.className = "error";
+          }
+        } catch (error) {
+          message.textContent = "Error adding question. Please try again.";
+          message.className = "error";
+        }
+      });
+    </script>
+  </body>
+</html>
