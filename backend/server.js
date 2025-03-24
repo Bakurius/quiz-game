@@ -770,7 +770,6 @@ async function seedQuestions() {
   }
 }
 
-// Seed Topics for Learn Section
 async function seedTopics() {
   try {
     await Topic.deleteMany({});
@@ -778,7 +777,7 @@ async function seedTopics() {
     const sampleTopics = [
       {
         subject: "მათემატიკა",
-        topicName: "Solve Quadratic Functions",
+        topicName: "საკითხი 1: Solve Quadratic Functions",
         videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", // Example YouTube video
         exercises: [
           {
@@ -805,7 +804,7 @@ async function seedTopics() {
       },
       {
         subject: "ქართული",
-        topicName: "ქართული გრამატიკა: ზმნები",
+        topicName: "საკითხი 1: ქართული გრამატიკა: ზმნები",
         videoUrl: "https://www.youtube.com/embed/sample-video", // Replace with real video
         exercises: [
           {
@@ -815,7 +814,71 @@ async function seedTopics() {
           },
         ],
       },
-      // Add more topics for other subjects (30+ topics total)
+      {
+        subject: "ინგლისური",
+        topicName: "საკითხი 1: Basic Grammar",
+        videoUrl: "https://www.youtube.com/embed/sample-video", // Replace with real video
+        exercises: [
+          {
+            question: "Choose the correct form: I ___ to school every day.",
+            options: ["go", "goes", "going", "went"],
+            answer: "go",
+          },
+        ],
+      },
+      {
+        subject: "ბიოლოგია",
+        topicName: "საკითხი 1: Cell Structure",
+        videoUrl: "https://www.youtube.com/embed/sample-video", // Replace with real video
+        exercises: [
+          {
+            question: "What is the powerhouse of the cell?",
+            options: ["Nucleus", "Mitochondria", "Ribosome", "Golgi Apparatus"],
+            answer: "Mitochondria",
+          },
+        ],
+      },
+      {
+        subject: "ქიმია",
+        topicName: "საკითხი 1: Periodic Table",
+        videoUrl: "https://www.youtube.com/embed/sample-video", // Replace with real video
+        exercises: [
+          {
+            question: "What is the symbol for Gold?",
+            options: ["Au", "Ag", "Fe", "Cu"],
+            answer: "Au",
+          },
+        ],
+      },
+      {
+        subject: "ისტორია",
+        topicName: "საკითხი 1: World War I",
+        videoUrl: "https://www.youtube.com/embed/sample-video", // Replace with real video
+        exercises: [
+          {
+            question: "What year did World War I begin?",
+            options: ["1914", "1918", "1939", "1945"],
+            answer: "1914",
+          },
+        ],
+      },
+      {
+        subject: "ფიზიკა",
+        topicName: "საკითხი 1: Newton’s Laws",
+        videoUrl: "https://www.youtube.com/embed/sample-video", // Replace with real video
+        exercises: [
+          {
+            question: "What is Newton’s First Law also known as?",
+            options: [
+              "Law of Gravity",
+              "Law of Inertia",
+              "Law of Motion",
+              "Law of Force",
+            ],
+            answer: "Law of Inertia",
+          },
+        ],
+      },
     ];
     await Topic.insertMany(sampleTopics);
     console.log(`Seeded ${sampleTopics.length} topics successfully`);
@@ -1002,18 +1065,31 @@ app.get("/api/exercise-scores/:userId", authenticateToken, async (req, res) => {
   }
 });
 
-// Get Rankings (Combined Quiz and Exercise Scores)
+// Get Rankings (Separate Quiz and Exercise Scores)
 app.get("/api/rankings", async (req, res) => {
   try {
     const users = await User.find().select("username totalScore");
-    const rankings = users
-      .filter((user) => user.totalScore !== undefined)
-      .map((user) => ({
-        username: user.username,
-        totalScore: user.totalScore || 0,
-      }))
-      .sort((a, b) => b.totalScore - a.totalScore);
-    res.json(rankings);
+    const rankings = await Promise.all(
+      users.map(async (user) => {
+        const quizScores = await Score.find({ userId: user._id });
+        const exerciseScores = await ExerciseScore.find({ userId: user._id });
+        const quizTotal = quizScores.reduce(
+          (sum, entry) => sum + entry.score,
+          0
+        );
+        const exerciseTotal = exerciseScores.reduce(
+          (sum, entry) => sum + entry.score,
+          0
+        );
+        return {
+          username: user.username,
+          quizScore: quizTotal || 0,
+          exerciseScore: exerciseTotal || 0,
+          totalScore: user.totalScore || 0,
+        };
+      })
+    );
+    res.json(rankings.sort((a, b) => b.totalScore - a.totalScore));
   } catch (error) {
     res.status(500).json({ message: "Error fetching rankings", error });
   }
@@ -1122,5 +1198,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   // seedQuestions(); // Uncomment to seed Quiz Game questions
-  // seedTopics(); // Uncomment to seed Learn topics
+  seedTopics(); // Uncomment to seed Learn topics
 });

@@ -8,7 +8,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Fetch and display subjects
   try {
     const response = await fetch("/api/subjects");
+    if (!response.ok)
+      throw new Error(`Failed to fetch subjects: ${response.statusText}`);
     const subjects = await response.json();
+    console.log("Fetched subjects:", subjects); // Debug log
+
+    if (subjects.length === 0) {
+      subjectButtonsDiv.innerHTML = "<p>No subjects available.</p>";
+      return;
+    }
 
     subjects.forEach((subject) => {
       const button = document.createElement("button");
@@ -18,6 +26,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   } catch (error) {
     console.error("Error fetching subjects:", error);
+    subjectButtonsDiv.innerHTML =
+      "<p>Error loading subjects. Please try again later.</p>";
   }
 
   // Show topics for a subject
@@ -28,7 +38,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
       const response = await fetch(`/api/topics/${subject}`);
+      if (!response.ok)
+        throw new Error(`Failed to fetch topics: ${response.statusText}`);
       const topics = await response.json();
+      console.log("Fetched topics:", topics); // Debug log
+
+      if (topics.length === 0) {
+        topicButtonsDiv.innerHTML =
+          "<p>No topics available for this subject.</p>";
+        return;
+      }
 
       topics.forEach((topic) => {
         const button = document.createElement("button");
@@ -38,6 +57,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     } catch (error) {
       console.error("Error fetching topics:", error);
+      topicButtonsDiv.innerHTML =
+        "<p>Error loading topics. Please try again later.</p>";
     }
   }
 
@@ -48,7 +69,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
       const response = await fetch(`/api/topic/${topicId}`);
+      if (!response.ok)
+        throw new Error(`Failed to fetch topic: ${response.statusText}`);
       const topic = await response.json();
+      console.log("Fetched topic:", topic); // Debug log
 
       // Display video
       videoContainer.innerHTML = `<iframe width="560" height="315" src="${topic.videoUrl}" frameborder="0" allowfullscreen></iframe>`;
@@ -79,6 +103,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     } catch (error) {
       console.error("Error fetching topic:", error);
+      contentSection.innerHTML =
+        "<p>Error loading topic. Please try again later.</p>";
     }
   }
 
@@ -105,12 +131,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (isCorrect) {
       try {
-        await fetch("/api/exercise-score", {
+        const response = await fetch("/api/exercise-score", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ topicId, score, date: new Date() }),
         });
+        if (!response.ok) throw new Error("Failed to save exercise score");
       } catch (error) {
         console.error("Error saving exercise score:", error);
       }

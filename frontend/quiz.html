@@ -329,7 +329,9 @@
             );
           }
         </script>
-        <button class="nav-btn" onclick="logout()">Logout</button>
+        <button class="nav-btn" onclick="window.location.href='/index.html'">
+          Go Back
+        </button>
       </div>
     </div>
 
@@ -418,6 +420,7 @@
               <p>Your final score is ${score}/${questions.length}</p>
               <div class="button-group">
                 <button class="start-btn" onclick="window.location.reload()">Play Again</button>
+                <button class="nav-btn" onclick="window.location.href='/index.html'">Go Back</button>
               </div>
             `;
           });
@@ -458,19 +461,6 @@
         });
         const result = await response.json();
         return result.totalScore;
-      }
-
-      function logout() {
-        fetch("/api/logout", {
-          method: "POST",
-          credentials: "include",
-        }).then(() => {
-          localStorage.removeItem("userId");
-          localStorage.removeItem("username");
-          localStorage.removeItem("isAdmin");
-          alert("Logged out successfully!");
-          window.location.href = "login.html";
-        });
       }
 
       const modal = document.getElementById("rankings-modal");
