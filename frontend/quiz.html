@@ -420,7 +420,6 @@
               <p>Your final score is ${score}/${questions.length}</p>
               <div class="button-group">
                 <button class="start-btn" onclick="window.location.reload()">Play Again</button>
-                <button class="nav-btn" onclick="window.location.href='/index.html'">Go Back</button>
               </div>
             `;
           });
@@ -479,8 +478,8 @@
         rankings.forEach((entry, index) => {
           const li = document.createElement("li");
           li.textContent = `${index + 1}. ${entry.username} - ${
-            entry.totalScore
-          }`;
+            entry.quizScore
+          }`; // Use quizScore instead of totalScore
           if (entry.username === localStorage.getItem("username")) {
             li.classList.add("bold");
           }

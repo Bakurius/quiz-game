@@ -4,6 +4,30 @@ document.addEventListener("DOMContentLoaded", async () => {
   const contentSection = document.getElementById("content-section");
   const videoContainer = document.getElementById("video-container");
   const exercisesList = document.getElementById("exercises-list");
+  const exerciseScoreSpan = document.getElementById("exercise-score");
+
+  let currentSubject = null;
+
+  // Fetch and display initial exercise score
+  async function fetchExerciseScore() {
+    try {
+      const response = await fetch("/api/rankings", { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to fetch rankings");
+      const rankings = await response.json();
+      const user = await fetch("/api/check-auth", {
+        credentials: "include",
+      }).then((res) => res.json());
+      const userRanking = rankings.find((r) => r.username === user.username);
+      exerciseScoreSpan.textContent = userRanking
+        ? userRanking.exerciseScore
+        : 0;
+    } catch (error) {
+      console.error("Error fetching exercise score:", error);
+      exerciseScoreSpan.textContent = "0";
+    }
+  }
+
+  fetchExerciseScore();
 
   // Fetch and display subjects
   try {
@@ -11,7 +35,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!response.ok)
       throw new Error(`Failed to fetch subjects: ${response.statusText}`);
     const subjects = await response.json();
-    console.log("Fetched subjects:", subjects); // Debug log
+    console.log("Fetched subjects:", subjects);
 
     if (subjects.length === 0) {
       subjectButtonsDiv.innerHTML = "<p>No subjects available.</p>";
@@ -30,21 +54,31 @@ document.addEventListener("DOMContentLoaded", async () => {
       "<p>Error loading subjects. Please try again later.</p>";
   }
 
+  // Show subjects (go back to subject selection)
+  window.showSubjects = function () {
+    subjectButtonsDiv.style.display = "grid";
+    topicButtonsDiv.style.display = "none";
+    contentSection.style.display = "none";
+  };
+
   // Show topics for a subject
-  async function showTopics(subject) {
+  window.showTopics = async function (subject) {
+    currentSubject = subject;
     subjectButtonsDiv.style.display = "none";
     topicButtonsDiv.style.display = "grid";
-    topicButtonsDiv.innerHTML = "";
+    contentSection.style.display = "none";
+    topicButtonsDiv.innerHTML =
+      '<div id="back-to-subjects" class="back-button"><button onclick="showSubjects()">Go Back to Subjects</button></div>';
 
     try {
       const response = await fetch(`/api/topics/${subject}`);
       if (!response.ok)
         throw new Error(`Failed to fetch topics: ${response.statusText}`);
       const topics = await response.json();
-      console.log("Fetched topics:", topics); // Debug log
+      console.log("Fetched topics:", topics);
 
       if (topics.length === 0) {
-        topicButtonsDiv.innerHTML =
+        topicButtonsDiv.innerHTML +=
           "<p>No topics available for this subject.</p>";
         return;
       }
@@ -57,10 +91,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     } catch (error) {
       console.error("Error fetching topics:", error);
-      topicButtonsDiv.innerHTML =
+      topicButtonsDiv.innerHTML +=
         "<p>Error loading topics. Please try again later.</p>";
     }
-  }
+  };
 
   // Show topic content (video and exercises)
   async function showTopicContent(topicId) {
@@ -72,7 +106,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!response.ok)
         throw new Error(`Failed to fetch topic: ${response.statusText}`);
       const topic = await response.json();
-      console.log("Fetched topic:", topic); // Debug log
+      console.log("Fetched topic:", topic);
 
       // Display video
       videoContainer.innerHTML = `<iframe width="560" height="315" src="${topic.videoUrl}" frameborder="0" allowfullscreen></iframe>`;
@@ -138,6 +172,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           body: JSON.stringify({ topicId, score, date: new Date() }),
         });
         if (!response.ok) throw new Error("Failed to save exercise score");
+        // Update exercise score in navbar
+        fetchExerciseScore();
       } catch (error) {
         console.error("Error saving exercise score:", error);
       }
