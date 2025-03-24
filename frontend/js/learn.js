@@ -1,6 +1,7 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const subjectButtonsDiv = document.getElementById("subject-buttons");
   const topicButtonsDiv = document.getElementById("topic-buttons");
+  const topicGridDiv = topicButtonsDiv.querySelector(".topic-grid");
   const contentSection = document.getElementById("content-section");
   const videoContainer = document.getElementById("video-container");
   const exercisesList = document.getElementById("exercises-list");
@@ -46,6 +47,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     subjects.forEach((subject) => {
       const button = document.createElement("button");
       button.textContent = subject;
+      button.classList.add("subject-btn");
       button.addEventListener("click", () => showTopics(subject));
       subjectButtonsDiv.appendChild(button);
     });
@@ -64,12 +66,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Show topics for a subject
   window.showTopics = async function (subject) {
-    window.currentSubject = subject; // Update global currentSubject
+    window.currentSubject = subject;
     subjectButtonsDiv.style.display = "none";
-    topicButtonsDiv.style.display = "grid";
+    topicButtonsDiv.style.display = "block";
     contentSection.style.display = "none";
-    topicButtonsDiv.innerHTML =
-      '<div id="back-to-subjects" class="back-button"><button onclick="showSubjects()">Go Back to Subjects</button></div>';
+    topicGridDiv.innerHTML = ""; // Clear previous topics
 
     try {
       const response = await fetch(`/api/topics/${subject}`);
@@ -79,20 +80,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.log("Fetched topics:", topics);
 
       if (topics.length === 0) {
-        topicButtonsDiv.innerHTML +=
-          "<p>No topics available for this subject.</p>";
+        topicGridDiv.innerHTML = "<p>No topics available for this subject.</p>";
         return;
       }
 
       topics.forEach((topic) => {
         const button = document.createElement("button");
         button.textContent = topic.topicName;
+        button.classList.add("topic-btn");
         button.addEventListener("click", () => showTopicContent(topic._id));
-        topicButtonsDiv.appendChild(button);
+        topicGridDiv.appendChild(button);
       });
     } catch (error) {
       console.error("Error fetching topics:", error);
-      topicButtonsDiv.innerHTML +=
+      topicGridDiv.innerHTML =
         "<p>Error loading topics. Please try again later.</p>";
     }
   };
@@ -110,7 +111,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.log("Fetched topic:", topic);
 
       // Display video
-      videoContainer.innerHTML = `<iframe width="560" height="315" src="${topic.videoUrl}" frameborder="0" allowfullscreen></iframe>`;
+      videoContainer.innerHTML = `<iframe width="100%" height="315" src="${topic.videoUrl}" frameborder="0" allowfullscreen></iframe>`;
 
       // Display exercises
       exercisesList.innerHTML = "";
@@ -118,21 +119,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         const exerciseDiv = document.createElement("div");
         exerciseDiv.classList.add("exercise");
         exerciseDiv.innerHTML = `
-            <p>${exercise.question}</p>
+            <p class="exercise-question">${exercise.question}</p>
             ${exercise.options
               .map(
                 (option, i) => `
-              <label>
+              <label class="exercise-option">
                 <input type="radio" name="exercise-${index}" value="${option}">
                 ${option}
-              </label><br>
+              </label>
             `
               )
               .join("")}
-            <button onclick="submitExercise('${topic._id}', ${index}, '${
-          exercise.answer
-        }', this)">Submit</button>
-            <p id="result-${index}"></p>
+            <button class="submit-btn" onclick="submitExercise('${
+              topic._id
+            }', ${index}, '${exercise.answer}', this)">Submit</button>
+            <p id="result-${index}" class="exercise-result"></p>
           `;
         exercisesList.appendChild(exerciseDiv);
       });
