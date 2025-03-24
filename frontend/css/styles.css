@@ -21,8 +21,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 100vh;
-  justify-content: center; /* Center content vertically for index.html */
+  padding-top: 20px; /* Reduced to bring content closer to navbar */
 }
 
 /* Profile Card (index.html) */
@@ -175,11 +174,6 @@ body {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Adjust container padding for learn.html to account for navbar */
-.container {
-  padding-top: 70px; /* Space for navbar in learn.html */
-}
-
 /* Back Button (learn.html) */
 .back-button {
   margin: 15px 0;
@@ -218,6 +212,18 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 15px;
   padding: 15px 0;
+}
+
+/* Adjust padding for subjects section specifically */
+#subject-buttons {
+  padding-top: 10px; /* Minimal padding to bring subjects closer to navbar */
+}
+
+/* Remove min-height for learn.html sections to prevent extra space */
+#subject-buttons,
+#topic-buttons,
+#content-section {
+  min-height: auto; /* Override min-height for learn.html sections */
 }
 
 .subject-btn,
