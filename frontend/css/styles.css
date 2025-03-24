@@ -97,6 +97,30 @@ body {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
+.nav-home-btn {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.nav-home-btn:hover {
+  background: linear-gradient(135deg, #fb8c00, #ef6c00);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.nav-home-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
 /* Logout Button */
 .logout-btn {
   background: linear-gradient(135deg, #ff9800, #f57c00);
@@ -138,7 +162,7 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   display: flex;
-  justify-content: center;
+  justify-content: space-between; /* Space between home button and score */
   align-items: center;
   font-size: 18px;
   font-weight: 500;
@@ -313,6 +337,12 @@ body {
   font-size: 16px;
 }
 
+.padlock {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 /* Mobile Adjustments */
 @media (max-width: 600px) {
   .container {
@@ -344,10 +374,17 @@ body {
 
   .navbar-content {
     font-size: 16px;
+    flex-direction: column; /* Stack items on mobile */
+    gap: 10px;
   }
 
   .navbar-content span {
     padding: 4px 12px;
+  }
+
+  .nav-home-btn {
+    padding: 6px 12px;
+    font-size: 14px;
   }
 
   .back-button button {
@@ -410,6 +447,11 @@ body {
 
   .navbar-content {
     font-size: 20px;
+  }
+
+  .nav-home-btn {
+    padding: 8px 15px;
+    font-size: 16px;
   }
 
   .back-button button {

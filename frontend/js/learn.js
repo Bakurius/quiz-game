@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     subjectButtonsDiv.style.display = "grid";
     topicButtonsDiv.style.display = "none";
     contentSection.style.display = "none";
+    localStorage.setItem("learnState", JSON.stringify({ section: "subjects" }));
   };
 
   // Show topics for a subject
@@ -70,7 +71,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     subjectButtonsDiv.style.display = "none";
     topicButtonsDiv.style.display = "block";
     contentSection.style.display = "none";
-    topicGridDiv.innerHTML = ""; // Clear previous topics
+    topicGridDiv.innerHTML = "";
 
     try {
       const response = await fetch(`/api/topics/${subject}`);
@@ -91,6 +92,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         button.addEventListener("click", () => showTopicContent(topic._id));
         topicGridDiv.appendChild(button);
       });
+
+      localStorage.setItem(
+        "learnState",
+        JSON.stringify({ section: "topics", subject })
+      );
     } catch (error) {
       console.error("Error fetching topics:", error);
       topicGridDiv.innerHTML =
@@ -116,6 +122,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Display exercises
       exercisesList.innerHTML = "";
       topic.exercises.forEach((exercise, index) => {
+        const exerciseKey = `${topic._id}-${index}`;
+        const isAnswered =
+          localStorage.getItem(`exercise-${exerciseKey}`) === "answered";
+
         const exerciseDiv = document.createElement("div");
         exerciseDiv.classList.add("exercise");
         exerciseDiv.innerHTML = `
@@ -124,7 +134,9 @@ document.addEventListener("DOMContentLoaded", async () => {
               .map(
                 (option, i) => `
               <label class="exercise-option">
-                <input type="radio" name="exercise-${index}" value="${option}">
+                <input type="radio" name="exercise-${index}" value="${option}" ${
+                  isAnswered ? "disabled" : ""
+                }>
                 ${option}
               </label>
             `
@@ -132,11 +144,24 @@ document.addEventListener("DOMContentLoaded", async () => {
               .join("")}
             <button class="submit-btn" onclick="submitExercise('${
               topic._id
-            }', ${index}, '${exercise.answer}', this)">Submit</button>
+            }', ${index}, '${exercise.answer}', this)" ${
+          isAnswered ? "disabled" : ""
+        }>
+              ${
+                isAnswered
+                  ? '<span class="padlock">🔒 Answered</span>'
+                  : "Submit"
+              }
+            </button>
             <p id="result-${index}" class="exercise-result"></p>
           `;
         exercisesList.appendChild(exerciseDiv);
       });
+
+      localStorage.setItem(
+        "learnState",
+        JSON.stringify({ section: "content", topicId })
+      );
     } catch (error) {
       console.error("Error fetching topic:", error);
       contentSection.innerHTML =
@@ -151,6 +176,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     correctAnswer,
     button
   ) => {
+    const exerciseKey = `${topicId}-${exerciseIndex}`;
     const selectedOption = document.querySelector(
       `input[name="exercise-${exerciseIndex}"]:checked`
     );
@@ -161,8 +187,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // Disable the button to prevent spamming
+    // Disable the button and inputs to prevent spamming
     button.disabled = true;
+    document
+      .querySelectorAll(`input[name="exercise-${exerciseIndex}"]`)
+      .forEach((input) => {
+        input.disabled = true;
+      });
 
     const userAnswer = selectedOption.value;
     const isCorrect = userAnswer === correctAnswer;
@@ -172,6 +203,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       ? "Correct! +10 points"
       : "Incorrect. Try again!";
     resultDiv.style.color = isCorrect ? "green" : "red";
+
+    // Mark the exercise as answered in local storage
+    localStorage.setItem(`exercise-${exerciseKey}`, "answered");
 
     if (isCorrect) {
       try {
@@ -187,12 +221,26 @@ document.addEventListener("DOMContentLoaded", async () => {
           }),
         });
         if (!response.ok) throw new Error("Failed to save exercise score");
-        // Update exercise score in navbar
         fetchExerciseScore();
       } catch (error) {
         console.error("Error saving exercise score:", error);
-        button.disabled = false; // Re-enable button if there's an error
+        button.disabled = false;
+        document
+          .querySelectorAll(`input[name="exercise-${exerciseIndex}"]`)
+          .forEach((input) => {
+            input.disabled = false;
+          });
       }
     }
   };
+
+  // Restore state on page load
+  const savedState = JSON.parse(localStorage.getItem("learnState"));
+  if (savedState) {
+    if (savedState.section === "topics" && savedState.subject) {
+      showTopics(savedState.subject);
+    } else if (savedState.section === "content" && savedState.topicId) {
+      showTopicContent(savedState.topicId);
+    }
+  }
 });

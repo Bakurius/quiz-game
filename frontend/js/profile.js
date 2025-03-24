@@ -16,10 +16,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       const user = await response.json();
       console.log("Authenticated user:", user);
 
-      // Display user info
       document.getElementById("username").textContent = user.username;
 
-      // Fetch and display scores
       const scoreResponse = await fetch("/api/rankings", {
         credentials: "include",
       });
@@ -40,7 +38,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         ? userRanking.exerciseScore
         : 0;
 
-      // Logout button
       document
         .getElementById("logout-button")
         .addEventListener("click", async () => {
@@ -48,6 +45,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             await fetch("/api/logout", {
               method: "POST",
               credentials: "include",
+            });
+            localStorage.removeItem("learnState"); // Clear learn state
+            Object.keys(localStorage).forEach((key) => {
+              if (key.startsWith("exercise-")) {
+                localStorage.removeItem(key); // Clear answered exercises
+              }
             });
             window.location.href = "/login.html";
           } catch (error) {
@@ -60,10 +63,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Fetch scores on initial load
   fetchAndDisplayProfile();
 
-  // Refresh scores when the page becomes visible (e.g., after navigating back)
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
       fetchAndDisplayProfile();
