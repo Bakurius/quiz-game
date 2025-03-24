@@ -3,13 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quiz Game</title>
-    <script>
-      // Redirect to login.html
-      window.location.href = "/login.html";
-    </script>
+    <title>Quiz & Learn</title>
+    <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
-    <p>Redirecting to login page...</p>
+    <div class="container">
+      <!-- Profile Section -->
+      <div class="profile-box">
+        <div class="profile-picture">მსწავლელი</div>
+        <h2 id="username"></h2>
+        <p id="email"></p>
+        <p>Ranking Score: <span id="ranking-score">0</span></p>
+      </div>
+
+      <!-- Main Buttons -->
+      <div class="main-buttons">
+        <button onclick="window.location.href='/learn.html'">ისწავლე</button>
+        <button onclick="window.location.href='/quiz.html'">Quiz Game</button>
+      </div>
+    </div>
+
+    <script src="/js/profile.js"></script>
   </body>
 </html>

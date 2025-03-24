@@ -10,6 +10,8 @@ const path = require("path");
 const User = require("./models/User");
 const Score = require("./models/Score");
 const Question = require("./models/Question");
+const Topic = require("./models/Topic");
+const ExerciseScore = require("./models/ExerciseScore");
 
 dotenv.config();
 const app = express();
@@ -25,11 +27,16 @@ const signupLimiter = rateLimit({
 // Serve static files from frontend/
 app.use(express.static(path.join(__dirname, "../frontend")));
 
-// CORS setup for Render (allow all origins for simplicity, since Render's domain isn't localhost)
+// Redirect root URL to index.html
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+});
+
+// CORS setup for Render
 app.use(
   cors({
     credentials: true,
-    origin: true, // Allow all origins (Render will use a different domain)
+    origin: true,
   })
 );
 app.use(express.json());
@@ -38,7 +45,7 @@ app.use(cookieParser());
 // MongoDB connection
 if (!process.env.MONGO_URI) {
   console.error("Error: MONGO_URI is not defined in environment variables.");
-  process.exit(1); // Exit the process with failure
+  process.exit(1);
 }
 
 mongoose
@@ -46,26 +53,24 @@ mongoose
   .then(() => console.log("Connected to MongoDB Atlas"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
-// Use environment variable for JWT_SECRET
-const JWT_SECRET = process.env.JWT_SECRET || "my-super-secret-key-123"; // Fallback for local dev
+// JWT Secret
+const JWT_SECRET = process.env.JWT_SECRET || "my-super-secret-key-123";
 
+// Middleware to authenticate token
 const authenticateToken = (req, res, next) => {
   const token = req.cookies.token;
-  console.log("Cookies received:", req.cookies); // Debug
   if (!token)
     return res.status(401).json({ message: "Authentication required" });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      console.log("Token verification failed:", err.message); // Debug
+    if (err)
       return res.status(403).json({ message: "Invalid or expired token" });
-    }
     req.user = user;
     next();
   });
 };
 
-// Seed Questions (unchanged)
+// Seed Questions for Quiz Game (unchanged)
 async function seedQuestions() {
   try {
     await Question.deleteMany({});
@@ -765,6 +770,60 @@ async function seedQuestions() {
   }
 }
 
+// Seed Topics for Learn Section
+async function seedTopics() {
+  try {
+    await Topic.deleteMany({});
+    console.log("Existing topics cleared");
+    const sampleTopics = [
+      {
+        subject: "მათემატიკა",
+        topicName: "Solve Quadratic Functions",
+        videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ", // Example YouTube video
+        exercises: [
+          {
+            question: "Solve: x² - 5x + 6 = 0",
+            options: [
+              "x = 2, x = 3",
+              "x = 1, x = 6",
+              "x = -2, x = -3",
+              "x = 0, x = 5",
+            ],
+            answer: "x = 2, x = 3",
+          },
+          {
+            question: "Solve: x² + 2x - 8 = 0",
+            options: [
+              "x = 2, x = -4",
+              "x = 1, x = -8",
+              "x = -2, x = 4",
+              "x = 0, x = 8",
+            ],
+            answer: "x = 2, x = -4",
+          },
+        ],
+      },
+      {
+        subject: "ქართული",
+        topicName: "ქართული გრამატიკა: ზმნები",
+        videoUrl: "https://www.youtube.com/embed/sample-video", // Replace with real video
+        exercises: [
+          {
+            question: "რა არის ზმნის ფუძე სიტყვაში 'ვწერ'?",
+            options: ["წერ", "ვწ", "ერ", "ვწერ"],
+            answer: "წერ",
+          },
+        ],
+      },
+      // Add more topics for other subjects (30+ topics total)
+    ];
+    await Topic.insertMany(sampleTopics);
+    console.log(`Seeded ${sampleTopics.length} topics successfully`);
+  } catch (error) {
+    console.error("Error seeding topics:", error);
+  }
+}
+
 // Signup
 app.post("/api/signup", signupLimiter, async (req, res) => {
   const { username, email, password, isAdmin } = req.body || {};
@@ -775,7 +834,6 @@ app.post("/api/signup", signupLimiter, async (req, res) => {
         .json({ message: "Username, email, and password are required" });
     }
 
-    // Username validation
     const usernameRegex = /^[a-zA-Z0-9]{3,20}$/;
     if (!usernameRegex.test(username)) {
       return res.status(400).json({
@@ -783,13 +841,11 @@ app.post("/api/signup", signupLimiter, async (req, res) => {
       });
     }
 
-    // Email validation
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ message: "Invalid email address" });
     }
 
-    // Password validation
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,50}$/;
     if (!passwordRegex.test(password)) {
@@ -847,8 +903,8 @@ app.post("/api/login", async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Secure in production
-      sameSite: "lax", // Allow cross-origin
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
       maxAge: 3600000,
     });
 
@@ -870,7 +926,7 @@ app.post("/api/logout", (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
-// Save Score and Update Total
+// Save Quiz Game Score
 app.post("/api/score", authenticateToken, async (req, res) => {
   const { score, date } = req.body;
   const userId = req.user.userId;
@@ -878,7 +934,10 @@ app.post("/api/score", authenticateToken, async (req, res) => {
     const newScore = new Score({ userId, score, date });
     await newScore.save();
     const userScores = await Score.find({ userId });
-    const totalScore = userScores.reduce((sum, entry) => sum + entry.score, 0);
+    const userExerciseScores = await ExerciseScore.find({ userId });
+    const totalScore =
+      userScores.reduce((sum, entry) => sum + entry.score, 0) +
+      userExerciseScores.reduce((sum, entry) => sum + entry.score, 0);
     await User.updateOne({ _id: userId }, { $set: { totalScore } });
     res.status(201).json({ message: "Score saved", totalScore });
   } catch (error) {
@@ -886,7 +945,31 @@ app.post("/api/score", authenticateToken, async (req, res) => {
   }
 });
 
-// Get Scores for a User
+// Save Exercise Score
+app.post("/api/exercise-score", authenticateToken, async (req, res) => {
+  const { topicId, score, date } = req.body;
+  const userId = req.user.userId;
+  try {
+    const newExerciseScore = new ExerciseScore({
+      userId,
+      topicId,
+      score,
+      date,
+    });
+    await newExerciseScore.save();
+    const userScores = await Score.find({ userId });
+    const userExerciseScores = await ExerciseScore.find({ userId });
+    const totalScore =
+      userScores.reduce((sum, entry) => sum + entry.score, 0) +
+      userExerciseScores.reduce((sum, entry) => sum + entry.score, 0);
+    await User.updateOne({ _id: userId }, { $set: { totalScore } });
+    res.status(201).json({ message: "Exercise score saved", totalScore });
+  } catch (error) {
+    res.status(500).json({ message: "Error saving exercise score", error });
+  }
+});
+
+// Get Scores for a User (Quiz Game)
 app.get("/api/scores/:userId", authenticateToken, async (req, res) => {
   const { userId } = req.params;
   if (req.user.userId !== userId && !req.user.isAdmin) {
@@ -901,7 +984,25 @@ app.get("/api/scores/:userId", authenticateToken, async (req, res) => {
   }
 });
 
-// Get Rankings
+// Get Exercise Scores for a User
+app.get("/api/exercise-scores/:userId", authenticateToken, async (req, res) => {
+  const { userId } = req.params;
+  if (req.user.userId !== userId && !req.user.isAdmin) {
+    return res.status(403).json({ message: "Unauthorized" });
+  }
+  try {
+    const exerciseScores = await ExerciseScore.find({ userId });
+    const totalScore = exerciseScores.reduce(
+      (sum, entry) => sum + entry.score,
+      0
+    );
+    res.json({ exerciseScores, totalScore });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching exercise scores", error });
+  }
+});
+
+// Get Rankings (Combined Quiz and Exercise Scores)
 app.get("/api/rankings", async (req, res) => {
   try {
     const users = await User.find().select("username totalScore");
@@ -918,7 +1019,7 @@ app.get("/api/rankings", async (req, res) => {
   }
 });
 
-// Get Questions by Category
+// Get Questions by Category (Quiz Game)
 app.get("/api/questions/:category", async (req, res) => {
   try {
     const questions = await Question.find({ category: req.params.category });
@@ -934,7 +1035,7 @@ app.get("/api/questions/:category", async (req, res) => {
   }
 });
 
-// Add New Questions
+// Add New Questions (Quiz Game)
 app.post("/api/questions/add", authenticateToken, async (req, res) => {
   const { category, question, options, answer } = req.body;
   try {
@@ -974,6 +1075,39 @@ app.post("/api/questions/add", authenticateToken, async (req, res) => {
   }
 });
 
+// Get Subjects (Learn Section)
+app.get("/api/subjects", async (req, res) => {
+  try {
+    const subjects = await Topic.distinct("subject");
+    res.json(subjects);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching subjects", error });
+  }
+});
+
+// Get Topics by Subject (Learn Section)
+app.get("/api/topics/:subject", async (req, res) => {
+  try {
+    const topics = await Topic.find({ subject: req.params.subject }).select(
+      "topicName"
+    );
+    res.json(topics);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching topics", error });
+  }
+});
+
+// Get Topic Details (Learn Section)
+app.get("/api/topic/:topicId", async (req, res) => {
+  try {
+    const topic = await Topic.findById(req.params.topicId);
+    if (!topic) return res.status(404).json({ message: "Topic not found" });
+    res.json(topic);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching topic", error });
+  }
+});
+
 // Check Auth Status
 app.get("/api/check-auth", authenticateToken, (req, res) => {
   res.json({
@@ -987,5 +1121,6 @@ app.get("/api/check-auth", authenticateToken, (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  // seedQuestions(); // Commented out
+  // seedQuestions(); // Uncomment to seed Quiz Game questions
+  // seedTopics(); // Uncomment to seed Learn topics
 });
