@@ -31,47 +31,58 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   fetchExerciseScore();
 
+  // Function to reset all sections to hidden
+  function resetSections() {
+    subjectButtonsDiv.style.display = "none";
+    topicButtonsDiv.style.display = "none";
+    contentSection.style.display = "none";
+  }
+
   // Fetch and display subjects
-  try {
-    const response = await fetch("/api/subjects");
-    if (!response.ok)
-      throw new Error(`Failed to fetch subjects: ${response.statusText}`);
-    const subjects = await response.json();
-    console.log("Fetched subjects:", subjects);
+  async function loadSubjects() {
+    resetSections();
+    subjectButtonsDiv.style.display = "grid";
+    subjectButtonsDiv.innerHTML = ""; // Clear previous content
 
-    if (subjects.length === 0) {
-      subjectButtonsDiv.innerHTML = "<p>No subjects available.</p>";
-      return;
+    try {
+      const response = await fetch("/api/subjects");
+      if (!response.ok)
+        throw new Error(`Failed to fetch subjects: ${response.statusText}`);
+      const subjects = await response.json();
+      console.log("Fetched subjects:", subjects);
+
+      if (subjects.length === 0) {
+        subjectButtonsDiv.innerHTML = "<p>No subjects available.</p>";
+        return;
+      }
+
+      subjects.forEach((subject) => {
+        const button = document.createElement("button");
+        button.textContent = subject;
+        button.classList.add("subject-btn");
+        button.addEventListener("click", () => showTopics(subject));
+        subjectButtonsDiv.appendChild(button);
+      });
+    } catch (error) {
+      console.error("Error fetching subjects:", error);
+      subjectButtonsDiv.innerHTML =
+        "<p>Error loading subjects. Please try again later.</p>";
     }
-
-    subjects.forEach((subject) => {
-      const button = document.createElement("button");
-      button.textContent = subject;
-      button.classList.add("subject-btn");
-      button.addEventListener("click", () => showTopics(subject));
-      subjectButtonsDiv.appendChild(button);
-    });
-  } catch (error) {
-    console.error("Error fetching subjects:", error);
-    subjectButtonsDiv.innerHTML =
-      "<p>Error loading subjects. Please try again later.</p>";
   }
 
   // Show subjects (go back to subject selection)
   window.showSubjects = function () {
+    resetSections();
     subjectButtonsDiv.style.display = "grid";
-    topicButtonsDiv.style.display = "none";
-    contentSection.style.display = "none";
     localStorage.setItem("learnState", JSON.stringify({ section: "subjects" }));
   };
 
   // Show topics for a subject
   window.showTopics = async function (subject) {
     window.currentSubject = subject;
-    subjectButtonsDiv.style.display = "none";
+    resetSections();
     topicButtonsDiv.style.display = "block";
-    contentSection.style.display = "none";
-    topicGridDiv.innerHTML = "";
+    topicGridDiv.innerHTML = ""; // Clear previous topics
 
     try {
       const response = await fetch(`/api/topics/${subject}`);
@@ -106,7 +117,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Show topic content (video and exercises)
   async function showTopicContent(topicId) {
-    topicButtonsDiv.style.display = "none";
+    resetSections();
     contentSection.style.display = "block";
 
     try {
@@ -234,6 +245,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   };
 
+  // Add event listener to "Go Back to Home" button to clear state
+  document.getElementById("back-to-index").addEventListener("click", () => {
+    localStorage.removeItem("learnState"); // Clear state when navigating to index.html
+  });
+
   // Restore state on page load
   const savedState = JSON.parse(localStorage.getItem("learnState"));
   if (savedState) {
@@ -241,6 +257,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       showTopics(savedState.subject);
     } else if (savedState.section === "content" && savedState.topicId) {
       showTopicContent(savedState.topicId);
+    } else {
+      loadSubjects(); // Default to subjects if state is invalid
     }
+  } else {
+    loadSubjects(); // Default to subjects if no state is saved
   }
 });
