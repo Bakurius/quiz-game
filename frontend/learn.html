@@ -1,42 +1,50 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ისწავლე</title>
-  <link rel="stylesheet" href="/css/styles.css">
-</head>
-<body>
-  <!-- Sticky Navbar -->
-  <div class="navbar">
-    <div class="navbar-content">
-      <button id="back-to-index" class="nav-home-btn" onclick="window.location.href='/index.html'">Go Back to Home</button>
-      <span>Exercise Score: <span id="exercise-score">0</span></span>
-    </div>
-  </div>
-
-  <div class="container">
-    <!-- Subject Buttons -->
-    <div id="subject-buttons" class="button-grid"></div>
-
-    <!-- Topic Buttons (Hidden Initially) -->
-    "topic-buttons" class="button-grid" style="display: none;">
-      <div id="back-to-subjects" class="back-button">
-        <button onclick="showSubjects()">Go Back to Subjects</button>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ისწავლე</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <!-- Sticky Navbar -->
+    <div class="navbar">
+      <div class="navbar-content">
+        <button
+          id="back-to-index"
+          class="nav-home-btn"
+          onclick="window.location.href='/index.html'"
+        >
+          Go Back to Home
+        </button>
+        <span>Exercise Score: <span id="exercise-score">0</span></span>
       </div>
-      <div class="topic-grid"></div>
     </div>
 
-    <!-- Video and Exercises (Hidden Initially) -->
-    <div id="content-section" style="display: none;">
-      <div id="back-to-topics" class="back-button">
-        <button onclick="showTopics(currentSubject)">Go Back to Topics</button>
+    <div class="container">
+      <!-- Subject Buttons -->
+      <div id="subject-buttons" class="button-grid"></div>
+
+      <!-- Topic Buttons (Hidden Initially) -->
+      <div id="topic-buttons" class="button-grid" style="display: none">
+        <div id="back-to-subjects" class="back-button">
+          <button onclick="showSubjects()">Go Back to Subjects</button>
+        </div>
+        <div class="topic-grid"></div>
       </div>
-      <div id="video-container" class="video-wrapper"></div>
-      <div id="exercises-list" class="exercises-wrapper"></div>
-    </div>
-  </div>
 
-  <script src="/js/learn.js"></script>
-</body>
+      <!-- Video and Exercises (Hidden Initially) -->
+      <div id="content-section" style="display: none">
+        <div id="back-to-topics" class="back-button">
+          <button onclick="showTopics(currentSubject)">
+            Go Back to Topics
+          </button>
+        </div>
+        <div id="video-container" class="video-wrapper"></div>
+        <div id="exercises-list" class="exercises-wrapper"></div>
+      </div>
+    </div>
+
+    <script src="/js/learn.js"></script>
+  </body>
 </html>
