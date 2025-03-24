@@ -3,28 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quiz & Learn</title>
+    <title>Quiz Game</title>
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
     <div class="container">
-      <!-- Profile Section -->
-      <div class="profile-box">
-        <div class="profile-picture">მსწავლელი</div>
-        <h2 id="username"></h2>
-        <p id="email"></p>
-        <p>Quiz Game Score: <span id="quiz-score">0</span></p>
-        <p>Exercise Score: <span id="exercise-score">0</span></p>
-      </div>
-
-      <!-- Main Buttons -->
-      <div class="main-buttons">
-        <button onclick="window.location.href='/learn.html'">ისწავლე</button>
-        <button onclick="window.location.href='/quiz.html'">Quiz Game</button>
-        <button id="logout-button">Logout</button>
+      <div class="profile-card">
+        <h1 id="username">User</h1>
+        <div class="scores">
+          <p>Quiz Game Score: <span id="quiz-score">0</span></p>
+          <p>Exercise Score: <span id="exercise-score">0</span></p>
+        </div>
+        <div class="button-group">
+          <button class="nav-btn" onclick="window.location.href='/learn.html'">
+            ისწავლე
+          </button>
+          <button class="nav-btn" onclick="window.location.href='/quiz.html'">
+            Quiz Game
+          </button>
+          <button class="logout-btn" id="logout-button">Logout</button>
+        </div>
       </div>
     </div>
-
     <script src="/js/profile.js"></script>
   </body>
 </html>
