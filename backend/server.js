@@ -1140,8 +1140,9 @@ app.get("/api/exercise-scores/:userId", authenticateToken, async (req, res) => {
   }
 });
 
-// Get Rankings (Separate Quiz and Exercise Scores)
-app.get("/api/rankings", async (req, res) => {
+// Get Rankings (Updated to Support Sorting by Quiz, Exercise, or Total Score)
+app.get("/api/rankings", authenticateToken, async (req, res) => {
+  const { sortBy } = req.query; // e.g., ?sortBy=quizScore, ?sortBy=exerciseScore, or ?sortBy=totalScore
   try {
     const users = await User.find().select("username totalScore");
     const rankings = await Promise.all(
@@ -1164,8 +1165,22 @@ app.get("/api/rankings", async (req, res) => {
         };
       })
     );
-    res.json(rankings.sort((a, b) => b.totalScore - a.totalScore));
+
+    // Sort based on the sortBy query parameter
+    let sortedRankings;
+    if (sortBy === "quizScore") {
+      sortedRankings = rankings.sort((a, b) => b.quizScore - a.quizScore);
+    } else if (sortBy === "exerciseScore") {
+      sortedRankings = rankings.sort(
+        (a, b) => b.exerciseScore - a.exerciseScore
+      );
+    } else {
+      sortedRankings = rankings.sort((a, b) => b.totalScore - a.totalScore); // Default to totalScore
+    }
+
+    res.json(sortedRankings);
   } catch (error) {
+    console.error("Error fetching rankings:", error);
     res.status(500).json({ message: "Error fetching rankings", error });
   }
 });

@@ -5,6 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ისწავლე</title>
     <link rel="stylesheet" href="/css/styles.css" />
+    <style>
+      /* Modal Styles */
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+      }
+      .modal-content {
+        background-color: white;
+        margin: 10% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        position: relative;
+      }
+      .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 24px;
+        cursor: pointer;
+      }
+      .rankings-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+      }
+      .rankings-table th,
+      .rankings-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      .rankings-table th {
+        background-color: #f2f2f2;
+        cursor: pointer;
+      }
+      .rankings-table th:hover {
+        background-color: #ddd;
+      }
+      .rankings-btn {
+        background-color: #4caf50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-bottom: 20px;
+        grid-column: 1 / -1; /* Make the button span the entire grid row */
+        justify-self: center;
+      }
+      .rankings-btn:hover {
+        background-color: #45a049;
+      }
+    </style>
   </head>
   <body>
     <!-- Sticky Navbar -->
@@ -23,7 +86,12 @@
 
     <div class="container">
       <!-- Subject Buttons -->
-      <div id="subject-buttons" class="button-grid"></div>
+      <div id="subject-buttons" class="button-grid">
+        <!-- Rankings Button -->
+        <button class="rankings-btn" onclick="showRankingsModal()">
+          Rankings
+        </button>
+      </div>
 
       <!-- Topic Buttons (Hidden Initially) -->
       <div id="topic-buttons" class="button-grid" style="display: none">
@@ -42,6 +110,25 @@
         </div>
         <div id="video-container" class="video-wrapper"></div>
         <div id="exercises-list" class="exercises-wrapper"></div>
+      </div>
+
+      <!-- Rankings Modal -->
+      <div id="rankings-modal" class="modal">
+        <div class="modal-content">
+          <span class="close-btn" onclick="closeRankingsModal()">×</span>
+          <h2>Rankings</h2>
+          <table class="rankings-table">
+            <thead>
+              <tr>
+                <th onclick="sortRankings('username')">Username</th>
+                <th onclick="sortRankings('quizScore')">Quiz Score</th>
+                <th onclick="sortRankings('exerciseScore')">Exercise Score</th>
+                <th onclick="sortRankings('totalScore')">Total Score</th>
+              </tr>
+            </thead>
+            <tbody id="rankings-table-body"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 

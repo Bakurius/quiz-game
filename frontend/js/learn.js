@@ -62,6 +62,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         return;
       }
 
+      // Add the rankings button first
+      const rankingsButton = document.createElement("button");
+      rankingsButton.textContent = "Rankings";
+      rankingsButton.classList.add("rankings-btn");
+      rankingsButton.addEventListener("click", showRankingsModal);
+      subjectButtonsDiv.appendChild(rankingsButton);
+
       subjects.forEach((subject) => {
         const button = document.createElement("button");
         button.textContent = subject;
@@ -159,32 +166,32 @@ document.addEventListener("DOMContentLoaded", async () => {
         const exerciseDiv = document.createElement("div");
         exerciseDiv.classList.add("exercise");
         exerciseDiv.innerHTML = `
-            <p class="exercise-question">${exercise.question}</p>
-            ${exercise.options
-              .map(
-                (option, i) => `
-              <label class="exercise-option">
-                <input type="radio" name="exercise-${index}" value="${option}" ${
-                  isAnswered ? "disabled" : ""
-                }>
-                ${option}
-              </label>
-            `
-              )
-              .join("")}
-            <button class="submit-btn" onclick="submitExercise('${
-              topic._id
-            }', ${index}, '${exercise.answer}', this)" ${
+              <p class="exercise-question">${exercise.question}</p>
+              ${exercise.options
+                .map(
+                  (option, i) => `
+                <label class="exercise-option">
+                  <input type="radio" name="exercise-${index}" value="${option}" ${
+                    isAnswered ? "disabled" : ""
+                  }>
+                  ${option}
+                </label>
+              `
+                )
+                .join("")}
+              <button class="submit-btn" onclick="submitExercise('${
+                topic._id
+              }', ${index}, '${exercise.answer}', this)" ${
           isAnswered ? "disabled" : ""
         }>
-              ${
-                isAnswered
-                  ? '<span class="padlock">🔒 Answered</span>'
-                  : "Submit"
-              }
-            </button>
-            <p id="result-${index}" class="exercise-result"></p>
-          `;
+                ${
+                  isAnswered
+                    ? '<span class="padlock">🔒 Answered</span>'
+                    : "Submit"
+                }
+              </button>
+              <p id="result-${index}" class="exercise-result"></p>
+            `;
         exercisesList.appendChild(exerciseDiv);
       });
 
@@ -199,7 +206,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // Submit exercise answer
+  // Submit exercise answer (Updated to Fix +10 Points Visual Bug)
   window.submitExercise = async (
     topicId,
     exerciseIndex,
@@ -229,28 +236,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     const isCorrect = userAnswer === correctAnswer;
     const score = isCorrect ? 10 : 0;
 
-    resultDiv.textContent = isCorrect
-      ? "Correct! +10 points"
-      : "Incorrect. Try again!";
-    resultDiv.style.color = isCorrect ? "green" : "red";
-
     try {
-      const response = await fetch("/api/submit-exercise", {
+      const response = await fetch("/api/exercise-score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           topicId,
           exerciseIndex,
-          exerciseKey,
           score,
           date: new Date(),
         }),
       });
-      if (!response.ok) throw new Error("Failed to submit exercise");
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to submit exercise");
+      }
+
+      // Only show the result if the submission was successful
+      resultDiv.textContent = isCorrect
+        ? "Correct! +10 points"
+        : "Incorrect. Try again!";
+      resultDiv.style.color = isCorrect ? "green" : "red";
+      button.innerHTML = '<span class="padlock">🔒 Answered</span>';
+
+      // Update the exercise score display
       fetchExerciseScore();
     } catch (error) {
       console.error("Error submitting exercise:", error);
+      resultDiv.textContent = error.message;
+      resultDiv.style.color = "red";
+      // Re-enable the button and inputs if the submission fails
       button.disabled = false;
       document
         .querySelectorAll(`input[name="exercise-${exerciseIndex}"]`)
@@ -279,4 +296,70 @@ document.addEventListener("DOMContentLoaded", async () => {
   } else {
     loadSubjects(); // Default to subjects if no state is saved
   }
+
+  // Rankings Modal Functions
+  let rankingsData = [];
+  let currentSortBy = "totalScore";
+
+  async function fetchRankings(sortBy = "totalScore") {
+    try {
+      const response = await fetch(`/api/rankings?sortBy=${sortBy}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch rankings");
+      }
+      rankingsData = await response.json();
+      currentSortBy = sortBy;
+      displayRankings();
+    } catch (error) {
+      console.error("Error fetching rankings:", error);
+      const tableBody = document.getElementById("rankings-table-body");
+      tableBody.innerHTML =
+        "<tr><td colspan='4'>Error loading rankings. Please try again later.</td></tr>";
+    }
+  }
+
+  function displayRankings() {
+    const tableBody = document.getElementById("rankings-table-body");
+    tableBody.innerHTML = "";
+    rankingsData.forEach((user) => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+          <td>${user.username}</td>
+          <td>${user.quizScore}</td>
+          <td>${user.exerciseScore}</td>
+          <td>${user.totalScore}</td>
+        `;
+      tableBody.appendChild(row);
+    });
+  }
+
+  function sortRankings(sortBy) {
+    if (currentSortBy === sortBy) {
+      rankingsData.reverse();
+      displayRankings();
+    } else {
+      fetchRankings(sortBy);
+    }
+  }
+
+  window.showRankingsModal = function () {
+    fetchRankings("totalScore"); // Default sort by totalScore
+    const modal = document.getElementById("rankings-modal");
+    modal.style.display = "block";
+  };
+
+  window.closeRankingsModal = function () {
+    const modal = document.getElementById("rankings-modal");
+    modal.style.display = "none";
+  };
+
+  // Close modal when clicking outside
+  window.onclick = function (event) {
+    const modal = document.getElementById("rankings-modal");
+    if (event.target === modal) {
+      modal.style.display = "none";
+    }
+  };
 });
