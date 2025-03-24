@@ -33,16 +33,22 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Function to reset all sections to hidden
   function resetSections() {
+    console.log("Resetting sections...");
     subjectButtonsDiv.style.display = "none";
     topicButtonsDiv.style.display = "none";
     contentSection.style.display = "none";
+    // Clear content to prevent overlap
+    subjectButtonsDiv.innerHTML = "";
+    topicGridDiv.innerHTML = "";
+    videoContainer.innerHTML = "";
+    exercisesList.innerHTML = "";
   }
 
   // Fetch and display subjects
   async function loadSubjects() {
+    console.log("Loading subjects section...");
     resetSections();
     subjectButtonsDiv.style.display = "grid";
-    subjectButtonsDiv.innerHTML = ""; // Clear previous content
 
     try {
       const response = await fetch("/api/subjects");
@@ -72,17 +78,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Show subjects (go back to subject selection)
   window.showSubjects = function () {
+    console.log("Showing subjects section...");
     resetSections();
     subjectButtonsDiv.style.display = "grid";
+    loadSubjects(); // Reload subjects to ensure fresh data
     localStorage.setItem("learnState", JSON.stringify({ section: "subjects" }));
   };
 
   // Show topics for a subject
   window.showTopics = async function (subject) {
+    console.log("Showing topics section for subject:", subject);
     window.currentSubject = subject;
     resetSections();
     topicButtonsDiv.style.display = "block";
-    topicGridDiv.innerHTML = ""; // Clear previous topics
 
     try {
       const response = await fetch(`/api/topics/${subject}`);
@@ -117,6 +125,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Show topic content (video and exercises)
   async function showTopicContent(topicId) {
+    console.log("Showing content section for topic:", topicId);
     resetSections();
     contentSection.style.display = "block";
 
@@ -130,12 +139,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Display video
       videoContainer.innerHTML = `<iframe width="100%" height="315" src="${topic.videoUrl}" frameborder="0" allowfullscreen></iframe>`;
 
+      // Fetch answered exercises for the user
+      const user = await fetch("/api/check-auth", {
+        credentials: "include",
+      }).then((res) => res.json());
+      const answeredResponse = await fetch(
+        `/api/answered-exercises/${user.userId}/${topicId}`,
+        { credentials: "include" }
+      );
+      const answeredExercises = await answeredResponse.json();
+      console.log("Answered exercises:", answeredExercises);
+
       // Display exercises
       exercisesList.innerHTML = "";
       topic.exercises.forEach((exercise, index) => {
         const exerciseKey = `${topic._id}-${index}`;
-        const isAnswered =
-          localStorage.getItem(`exercise-${exerciseKey}`) === "answered";
+        const isAnswered = answeredExercises.includes(exerciseKey);
 
         const exerciseDiv = document.createElement("div");
         exerciseDiv.classList.add("exercise");
@@ -215,33 +234,29 @@ document.addEventListener("DOMContentLoaded", async () => {
       : "Incorrect. Try again!";
     resultDiv.style.color = isCorrect ? "green" : "red";
 
-    // Mark the exercise as answered in local storage
-    localStorage.setItem(`exercise-${exerciseKey}`, "answered");
-
-    if (isCorrect) {
-      try {
-        const response = await fetch("/api/exercise-score", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            topicId,
-            exerciseIndex,
-            score,
-            date: new Date(),
-          }),
+    try {
+      const response = await fetch("/api/submit-exercise", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          topicId,
+          exerciseIndex,
+          exerciseKey,
+          score,
+          date: new Date(),
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to submit exercise");
+      fetchExerciseScore();
+    } catch (error) {
+      console.error("Error submitting exercise:", error);
+      button.disabled = false;
+      document
+        .querySelectorAll(`input[name="exercise-${exerciseIndex}"]`)
+        .forEach((input) => {
+          input.disabled = false;
         });
-        if (!response.ok) throw new Error("Failed to save exercise score");
-        fetchExerciseScore();
-      } catch (error) {
-        console.error("Error saving exercise score:", error);
-        button.disabled = false;
-        document
-          .querySelectorAll(`input[name="exercise-${exerciseIndex}"]`)
-          .forEach((input) => {
-            input.disabled = false;
-          });
-      }
     }
   };
 
@@ -252,6 +267,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Restore state on page load
   const savedState = JSON.parse(localStorage.getItem("learnState"));
+  console.log("Restoring state:", savedState);
   if (savedState) {
     if (savedState.section === "topics" && savedState.subject) {
       showTopics(savedState.subject);

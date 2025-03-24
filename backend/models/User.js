@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   isAdmin: { type: Boolean, default: false },
   totalScore: { type: Number, default: 0 },
+  answeredExercises: [{ type: String }], // Added to track answered exercises (e.g., "topicId-exerciseIndex")
 });
 
 // Hash password before saving

@@ -1009,24 +1009,25 @@ app.post("/api/score", authenticateToken, async (req, res) => {
   }
 });
 
-// Save Exercise Score
+// Save Exercise Score (Updated to Check answeredExercises)
 app.post("/api/exercise-score", authenticateToken, async (req, res) => {
   const { topicId, exerciseIndex, score, date } = req.body;
   const userId = req.user.userId;
+  const exerciseKey = `${topicId}-${exerciseIndex}`; // Unique key for the exercise
 
   try {
-    // Check if the user has already submitted a score for this exercise
-    const existingScore = await ExerciseScore.findOne({
-      userId,
-      topicId,
-      exerciseIndex,
-    });
-    if (existingScore) {
+    // Fetch the user
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Check if the exercise has already been answered
+    if (user.answeredExercises.includes(exerciseKey)) {
       return res.status(400).json({
         message: "You have already submitted a score for this exercise",
       });
     }
 
+    // Save the exercise score
     const exerciseScore = new ExerciseScore({
       userId,
       topicId,
@@ -1036,8 +1037,8 @@ app.post("/api/exercise-score", authenticateToken, async (req, res) => {
     });
     await exerciseScore.save();
 
-    // Update user's total score
-    const user = await User.findById(userId);
+    // Update user's answeredExercises and totalScore
+    user.answeredExercises.push(exerciseKey);
     user.totalScore = (user.totalScore || 0) + score;
     await user.save();
 
@@ -1045,9 +1046,66 @@ app.post("/api/exercise-score", authenticateToken, async (req, res) => {
       .status(201)
       .json({ message: "Exercise score saved", totalScore: user.totalScore });
   } catch (error) {
+    console.error("Error saving exercise score:", error);
     res.status(500).json({ message: "Error saving exercise score", error });
   }
 });
+
+// Get Answered Exercises for a User and Topic (New Endpoint)
+app.get(
+  "/api/answered-exercises/:userId/:topicId",
+  authenticateToken,
+  async (req, res) => {
+    const { userId, topicId } = req.params;
+    if (req.user.userId !== userId && !req.user.isAdmin) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+    try {
+      const user = await User.findById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      const answeredExercises = user.answeredExercises || [];
+      res.json(answeredExercises.filter((key) => key.startsWith(topicId)));
+    } catch (error) {
+      console.error("Error fetching answered exercises:", error);
+      res
+        .status(500)
+        .json({ message: "Error fetching answered exercises", error });
+    }
+  }
+);
+
+// Clear Answered Exercises on Logout (New Endpoint)
+app.post(
+  "/api/clear-answered-exercises",
+  authenticateToken,
+  async (req, res) => {
+    const userId = req.user.userId;
+    try {
+      const user = await User.findById(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      // Clear answered exercises and reset exercise-related data
+      user.answeredExercises = [];
+      user.totalScore = (await Score.find({ userId })).reduce(
+        (sum, entry) => sum + entry.score,
+        0
+      ); // Recalculate totalScore based on quiz scores only
+      await user.save();
+
+      // Delete all exercise scores for the user
+      await ExerciseScore.deleteMany({ userId });
+
+      res
+        .status(200)
+        .json({ message: "Answered exercises cleared successfully" });
+    } catch (error) {
+      console.error("Error clearing answered exercises:", error);
+      res
+        .status(500)
+        .json({ message: "Error clearing answered exercises", error });
+    }
+  }
+);
 
 // Get Scores for a User (Quiz Game)
 app.get("/api/scores/:userId", authenticateToken, async (req, res) => {

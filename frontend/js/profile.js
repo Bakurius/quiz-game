@@ -46,11 +46,11 @@ document.addEventListener("DOMContentLoaded", async () => {
               method: "POST",
               credentials: "include",
             });
-            localStorage.removeItem("learnState"); // Clear learn state
-            Object.keys(localStorage).forEach((key) => {
-              if (key.startsWith("exercise-")) {
-                localStorage.removeItem(key); // Clear answered exercises
-              }
+            localStorage.removeItem("learnState"); // Clear navigation state
+            // Clear answered exercises on the server
+            await fetch("/api/clear-answered-exercises", {
+              method: "POST",
+              credentials: "include",
             });
             window.location.href = "/login.html";
           } catch (error) {
