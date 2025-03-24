@@ -16,17 +16,21 @@
         height: 100%;
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 1000;
+        display: flex; /* Use flexbox to center content */
+        justify-content: center;
+        align-items: center;
       }
       .modal-content {
         background-color: white;
-        margin: 10% auto;
-        padding: 20px;
+        margin: 0; /* Remove margin to let flexbox handle centering */
+        padding: 15px; /* Reduce padding for mobile */
         border-radius: 8px;
-        width: 80%;
+        width: 90%; /* Use a higher percentage for mobile */
         max-width: 600px;
         max-height: 80vh;
         overflow-y: auto;
         position: relative;
+        box-sizing: border-box; /* Ensure padding doesn't affect width */
       }
       .close-btn {
         position: absolute;
@@ -45,6 +49,7 @@
         border: 1px solid #ddd;
         padding: 8px;
         text-align: left;
+        font-size: 16px; /* Default font size */
       }
       .rankings-table th {
         background-color: #f2f2f2;
@@ -66,6 +71,29 @@
       }
       .rankings-btn:hover {
         background-color: #45a049;
+      }
+
+      /* Mobile-specific styles */
+      @media (max-width: 600px) {
+        .modal-content {
+          width: 95%; /* Use almost full width on mobile */
+          max-width: none; /* Remove max-width constraint */
+          padding: 10px; /* Further reduce padding */
+          max-height: 90vh; /* Allow more height on mobile */
+        }
+        .rankings-table {
+          display: block; /* Allow table to scroll horizontally */
+          overflow-x: auto;
+          white-space: nowrap; /* Prevent text wrapping */
+        }
+        .rankings-table th,
+        .rankings-table td {
+          padding: 6px; /* Reduce padding on mobile */
+          font-size: 14px; /* Smaller font size for mobile */
+        }
+        .close-btn {
+          font-size: 20px; /* Slightly smaller close button */
+        }
       }
     </style>
   </head>
