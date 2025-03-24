@@ -347,12 +347,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.showRankingsModal = function () {
     fetchRankings("totalScore"); // Default sort by totalScore
     const modal = document.getElementById("rankings-modal");
-    modal.style.display = "block";
+    modal.classList.add("show"); // Add the 'show' class to display with flex
   };
 
   window.closeRankingsModal = function () {
     const modal = document.getElementById("rankings-modal");
-    modal.style.display = "none";
+    modal.classList.remove("show"); // Remove the 'show' class to hide
   };
 
   // Close modal when clicking outside
