@@ -7,8 +7,9 @@ const exerciseScoreSchema = new mongoose.Schema({
     ref: "Topic",
     required: true,
   },
+  exerciseIndex: { type: Number, required: true }, // Add exerciseIndex to track specific exercise
   score: { type: Number, required: true },
-  date: { type: Date, default: Date.now },
+  date: { type: Date, required: true },
 });
 
 module.exports = mongoose.model("ExerciseScore", exerciseScoreSchema);

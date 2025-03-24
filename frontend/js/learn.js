@@ -6,7 +6,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const exercisesList = document.getElementById("exercises-list");
   const exerciseScoreSpan = document.getElementById("exercise-score");
 
-  let currentSubject = null;
+  // Make currentSubject globally accessible
+  window.currentSubject = null;
 
   // Fetch and display initial exercise score
   async function fetchExerciseScore() {
@@ -63,7 +64,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Show topics for a subject
   window.showTopics = async function (subject) {
-    currentSubject = subject;
+    window.currentSubject = subject; // Update global currentSubject
     subjectButtonsDiv.style.display = "none";
     topicButtonsDiv.style.display = "grid";
     contentSection.style.display = "none";
@@ -130,7 +131,7 @@ document.addEventListener("DOMContentLoaded", async () => {
               .join("")}
             <button onclick="submitExercise('${topic._id}', ${index}, '${
           exercise.answer
-        }')">Submit</button>
+        }', this)">Submit</button>
             <p id="result-${index}"></p>
           `;
         exercisesList.appendChild(exerciseDiv);
@@ -143,7 +144,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Submit exercise answer
-  window.submitExercise = async (topicId, exerciseIndex, correctAnswer) => {
+  window.submitExercise = async (
+    topicId,
+    exerciseIndex,
+    correctAnswer,
+    button
+  ) => {
     const selectedOption = document.querySelector(
       `input[name="exercise-${exerciseIndex}"]:checked`
     );
@@ -153,6 +159,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       resultDiv.textContent = "Please select an option!";
       return;
     }
+
+    // Disable the button to prevent spamming
+    button.disabled = true;
 
     const userAnswer = selectedOption.value;
     const isCorrect = userAnswer === correctAnswer;
@@ -169,13 +178,19 @@ document.addEventListener("DOMContentLoaded", async () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ topicId, score, date: new Date() }),
+          body: JSON.stringify({
+            topicId,
+            exerciseIndex,
+            score,
+            date: new Date(),
+          }),
         });
         if (!response.ok) throw new Error("Failed to save exercise score");
         // Update exercise score in navbar
         fetchExerciseScore();
       } catch (error) {
         console.error("Error saving exercise score:", error);
+        button.disabled = false; // Re-enable button if there's an error
       }
     }
   };

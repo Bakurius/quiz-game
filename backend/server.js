@@ -1010,23 +1010,39 @@ app.post("/api/score", authenticateToken, async (req, res) => {
 
 // Save Exercise Score
 app.post("/api/exercise-score", authenticateToken, async (req, res) => {
-  const { topicId, score, date } = req.body;
+  const { topicId, exerciseIndex, score, date } = req.body;
   const userId = req.user.userId;
+
   try {
-    const newExerciseScore = new ExerciseScore({
+    // Check if the user has already submitted a score for this exercise
+    const existingScore = await ExerciseScore.findOne({
       userId,
       topicId,
+      exerciseIndex,
+    });
+    if (existingScore) {
+      return res.status(400).json({
+        message: "You have already submitted a score for this exercise",
+      });
+    }
+
+    const exerciseScore = new ExerciseScore({
+      userId,
+      topicId,
+      exerciseIndex,
       score,
       date,
     });
-    await newExerciseScore.save();
-    const userScores = await Score.find({ userId });
-    const userExerciseScores = await ExerciseScore.find({ userId });
-    const totalScore =
-      userScores.reduce((sum, entry) => sum + entry.score, 0) +
-      userExerciseScores.reduce((sum, entry) => sum + entry.score, 0);
-    await User.updateOne({ _id: userId }, { $set: { totalScore } });
-    res.status(201).json({ message: "Exercise score saved", totalScore });
+    await exerciseScore.save();
+
+    // Update user's total score
+    const user = await User.findById(userId);
+    user.totalScore = (user.totalScore || 0) + score;
+    await user.save();
+
+    res
+      .status(201)
+      .json({ message: "Exercise score saved", totalScore: user.totalScore });
   } catch (error) {
     res.status(500).json({ message: "Error saving exercise score", error });
   }
