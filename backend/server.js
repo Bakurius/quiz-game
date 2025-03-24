@@ -35,8 +35,8 @@ app.get("/", (req, res) => {
 // CORS setup for Render
 app.use(
   cors({
+    origin: "https://quiz-game-dlzg.onrender.com", // Your frontend URL
     credentials: true,
-    origin: true,
   })
 );
 app.use(express.json());
@@ -59,12 +59,18 @@ const JWT_SECRET = process.env.JWT_SECRET || "my-super-secret-key-123";
 // Middleware to authenticate token
 const authenticateToken = (req, res, next) => {
   const token = req.cookies.token;
-  if (!token)
-    return res.status(401).json({ message: "Authentication required" });
+  console.log("Token received:", token);
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err)
-      return res.status(403).json({ message: "Invalid or expired token" });
+  if (!token) {
+    console.log("No token provided");
+    return res.status(401).json({ message: "No token provided" });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      console.log("Token verification failed:", err.message);
+      return res.status(403).json({ message: "Invalid token" });
+    }
     req.user = user;
     next();
   });
@@ -944,41 +950,36 @@ app.post("/api/signup", signupLimiter, async (req, res) => {
 
 // Login
 app.post("/api/login", async (req, res) => {
-  const { username, password } = req.body || {};
+  const { username, password } = req.body;
+
   try {
-    if (!username || !password) {
-      return res
-        .status(400)
-        .json({ message: "Username and password are required" });
-    }
     const user = await User.findOne({ username });
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Invalid credentials" });
 
     const token = jwt.sign(
-      { userId: user._id, username: user.username, isAdmin: user.isAdmin },
-      JWT_SECRET,
+      {
+        userId: user._id,
+        username: user.username,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      },
+      process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 3600000,
+      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+      sameSite: "strict",
+      maxAge: 3600000, // 1 hour in milliseconds
     });
 
-    res.json({
-      message: "Login successful",
-      userId: user._id,
-      username: user.username,
-      isAdmin: user.isAdmin,
-    });
+    res.status(200).json({ message: "Login successful" });
   } catch (error) {
-    console.error("Login error:", error);
     res.status(500).json({ message: "Error logging in", error });
   }
 });
@@ -1200,11 +1201,13 @@ app.get("/api/topic/:topicId", async (req, res) => {
   }
 });
 
-// Check Auth Status
+// Check Authentication
 app.get("/api/check-auth", authenticateToken, (req, res) => {
+  console.log("Check-auth request received. User:", req.user);
   res.json({
     userId: req.user.userId,
     username: req.user.username,
+    email: req.user.email,
     isAdmin: req.user.isAdmin,
   });
 });

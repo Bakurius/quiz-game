@@ -5,17 +5,32 @@ document.addEventListener("DOMContentLoaded", async () => {
         credentials: "include",
       });
       if (!response.ok) {
+        console.error(
+          "Authentication check failed:",
+          response.status,
+          response.statusText
+        );
         window.location.href = "/login.html";
         return;
       }
       const user = await response.json();
+      console.log("Authenticated user:", user);
 
       // Display user info
       document.getElementById("username").textContent = user.username;
-      document.getElementById("email").textContent = user.email;
 
       // Fetch and display scores
-      const scoreResponse = await fetch(`/api/rankings`);
+      const scoreResponse = await fetch("/api/rankings", {
+        credentials: "include",
+      });
+      if (!scoreResponse.ok) {
+        console.error(
+          "Failed to fetch rankings:",
+          scoreResponse.status,
+          scoreResponse.statusText
+        );
+        throw new Error("Failed to fetch rankings");
+      }
       const rankings = await scoreResponse.json();
       const userRanking = rankings.find((r) => r.username === user.username);
       document.getElementById("quiz-score").textContent = userRanking

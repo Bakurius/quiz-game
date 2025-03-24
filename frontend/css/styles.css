@@ -226,7 +226,6 @@ body {
   gap: 15px;
   padding: 15px 0;
 }
-
 /* Content Section (Video and Exercises) */
 #content-section {
   width: 100%;
@@ -426,5 +425,35 @@ body {
   .topic-btn {
     padding: 15px;
     font-size: 16px;
+  }
+
+  /* Center video and exercises for desktop */
+  .video-wrapper {
+    max-width: 640px;
+    margin: 0 auto 20px auto;
+  }
+
+  .video-wrapper iframe {
+    height: 360px;
+  }
+
+  .exercises-wrapper {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  /* Adjust topic buttons for desktop */
+  .topic-grid {
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(250px, 1fr)
+    ); /* Larger buttons on desktop */
+    gap: 20px;
+  }
+
+  .topic-btn {
+    padding: 20px;
+    font-size: 18px;
+    border-radius: 10px;
   }
 }
